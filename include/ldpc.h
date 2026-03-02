@@ -5,7 +5,8 @@
 
 typedef enum {
     LDPC_ALG_CONVENTIONAL = 0,
-    LDPC_ALG_PROPOSED = 1,
+    LDPC_ALG_RMAS1 = 1,
+    LDPC_ALG_RMAS2 = 2,
 } ldpc_algorithm_t;
 
 typedef struct {

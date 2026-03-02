@@ -224,7 +224,7 @@ static ldpc_decode_result_t decode_conventional(
     return r;
 }
 
-static ldpc_decode_result_t decode_proposed(
+static ldpc_decode_result_t decode_rmas1(
     const ldpc_matrix_t *h,
     const float *channel_llr,
     const ldpc_decoder_params_t *p,
@@ -294,14 +294,89 @@ static ldpc_decode_result_t decode_proposed(
     return r;
 }
 
+static ldpc_decode_result_t decode_rmas2(
+    const ldpc_matrix_t *h,
+    const float *channel_llr,
+    const ldpc_decoder_params_t *p,
+    uint8_t *hard_bits) {
+    float *v2c = (float *)calloc((size_t)h->edges, sizeof(float));
+    float *c2v = (float *)calloc((size_t)h->edges, sizeof(float));
+    float *app = (float *)calloc((size_t)h->n, sizeof(float));
+    if (!v2c || !c2v || !app) {
+        free(v2c);
+        free(c2v);
+        free(app);
+        return (ldpc_decode_result_t){0, 0};
+    }
+
+    for (int v = 0; v < h->n; ++v) {
+        app[v] = channel_llr[v];
+        for (int i = h->vn_edges_start[v]; i < h->vn_edges_start[v + 1]; ++i) {
+            v2c[h->vn_edges[i]] = app[v];
+        }
+    }
+
+    const int group = p->group_size < 1 ? 1 : p->group_size;
+    const float damp = fminf(fmaxf(p->damping, 0.0f), 1.0f);
+    const float hybrid = 0.5f;
+    ldpc_decode_result_t r = {p->max_iters, 0};
+
+    for (int it = 0; it < p->max_iters; ++it) {
+        for (int g0 = 0; g0 < h->m; g0 += group) {
+            int g1 = g0 + group;
+            if (g1 > h->m) {
+                g1 = h->m;
+            }
+
+            for (int c = g0; c < g1; ++c) {
+                check_node_update(h, c, p->alpha, p->beta, v2c, c2v);
+
+                for (int e = h->cn_start[c]; e < h->cn_start[c + 1]; ++e) {
+                    int v = h->vn_of_edge[e];
+                    float local = channel_llr[v];
+                    for (int j = h->vn_edges_start[v]; j < h->vn_edges_start[v + 1]; ++j) {
+                        local += c2v[h->vn_edges[j]];
+                    }
+                    app[v] = damp * app[v] + (1.0f - damp) * (hybrid * app[v] + (1.0f - hybrid) * local);
+                }
+
+                for (int e = h->cn_start[c]; e < h->cn_start[c + 1]; ++e) {
+                    int v = h->vn_of_edge[e];
+                    float extrinsic = app[v] - c2v[e];
+                    v2c[e] = damp * v2c[e] + (1.0f - damp) * extrinsic;
+                }
+            }
+        }
+
+        for (int v = 0; v < h->n; ++v) {
+            hard_bits[v] = (app[v] < 0.0f) ? 1U : 0U;
+        }
+
+        if (ldpc_check_syndrome(h, hard_bits)) {
+            r.iterations_used = it + 1;
+            r.success = 1;
+            break;
+        }
+    }
+
+    free(v2c);
+    free(c2v);
+    free(app);
+    return r;
+}
+
+
 ldpc_decode_result_t ldpc_decode(
     const ldpc_matrix_t *h,
     const float *channel_llr,
     ldpc_algorithm_t algorithm,
     const ldpc_decoder_params_t *params,
     uint8_t *hard_bits) {
-    if (algorithm == LDPC_ALG_PROPOSED) {
-        return decode_proposed(h, channel_llr, params, hard_bits);
+    if (algorithm == LDPC_ALG_RMAS1) {
+        return decode_rmas1(h, channel_llr, params, hard_bits);
+    }
+    if (algorithm == LDPC_ALG_RMAS2) {
+        return decode_rmas2(h, channel_llr, params, hard_bits);
     }
     return decode_conventional(h, channel_llr, params, hard_bits);
 }

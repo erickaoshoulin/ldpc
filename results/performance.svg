@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="420">
+<rect width="100%" height="100%" fill="#f8f9fb"/>
+<rect x="50" y="50" width="353" height="320" fill="white" stroke="#bbb"/>
+<text x="226.5" y="38" text-anchor="middle" font-size="14">BER vs SNR</text>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="80.0,70.0 142.6,72.8 205.2,73.5 267.8,79.8 330.4,87.5 393.0,102.8"/>
+<text x="399.0" y="102.8" font-size="10" fill="#1f77b4">CONVENTIONAL</text>
+<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="80.0,79.1 142.6,83.7 205.2,96.2 267.8,99.9 330.4,110.5 393.0,350.0"/>
+<text x="399.0" y="350.0" font-size="10" fill="#ff7f0e">RMAS1</text>
+<polyline fill="none" stroke="#2ca02c" stroke-width="2" points="80.0,73.8 142.6,84.9 205.2,101.3 267.8,110.5 330.4,116.0 393.0,136.7"/>
+<text x="399.0" y="136.7" font-size="10" fill="#2ca02c">RMAS2</text>
+<rect x="453" y="50" width="353" height="320" fill="white" stroke="#bbb"/>
+<text x="629.5" y="38" text-anchor="middle" font-size="14">FER vs SNR</text>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="483.0,71.6 545.6,72.5 608.2,74.4 670.8,79.1 733.4,83.9 796.0,105.0"/>
+<text x="802.0" y="105.0" font-size="10" fill="#1f77b4">CONVENTIONAL</text>
+<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="483.0,72.5 545.6,74.4 608.2,80.5 670.8,82.1 733.4,94.5 796.0,350.0"/>
+<text x="802.0" y="350.0" font-size="10" fill="#ff7f0e">RMAS1</text>
+<polyline fill="none" stroke="#2ca02c" stroke-width="2" points="483.0,70.0 545.6,72.5 608.2,83.9 670.8,86.0 733.4,98.8 796.0,115.5"/>
+<text x="802.0" y="115.5" font-size="10" fill="#2ca02c">RMAS2</text>
+<rect x="856" y="50" width="353" height="320" fill="white" stroke="#bbb"/>
+<text x="1032.5" y="38" text-anchor="middle" font-size="14">Average Iterations vs SNR</text>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="886.0,138.5 948.6,70.0 1011.2,219.1 1073.8,254.1 1136.4,348.5 1199.0,350.0"/>
+<text x="1205.0" y="350.0" font-size="10" fill="#1f77b4">CONVENTIONAL</text>
+<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="886.0,334.8 948.6,336.3 1011.2,325.7 1073.8,342.4 1136.4,342.4 1199.0,350.0"/>
+<text x="1205.0" y="350.0" font-size="10" fill="#ff7f0e">RMAS1</text>
+<polyline fill="none" stroke="#2ca02c" stroke-width="2" points="886.0,263.3 948.6,299.8 1011.2,315.0 1073.8,324.1 1136.4,339.3 1199.0,340.9"/>
+<text x="1205.0" y="340.9" font-size="10" fill="#2ca02c">RMAS2</text>
+</svg>
