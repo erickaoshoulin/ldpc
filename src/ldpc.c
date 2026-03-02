@@ -4,6 +4,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct {
+    int index;
+    float residual;
+} residual_entry_t;
+
+static int cmp_residual_desc(const void *a, const void *b) {
+    const residual_entry_t *ra = (const residual_entry_t *)a;
+    const residual_entry_t *rb = (const residual_entry_t *)b;
+    if (ra->residual < rb->residual) return 1;
+    if (ra->residual > rb->residual) return -1;
+    return 0;
+}
+
 static uint32_t xorshift32(uint32_t *state) {
     uint32_t x = *state;
     x ^= x << 13;
@@ -170,6 +183,58 @@ static void check_node_update(const ldpc_matrix_t *h, int c, float alpha, float 
     }
 }
 
+static float check_residual(const ldpc_matrix_t *h, int c, float alpha, float beta, const float *v2c, const float *c2v) {
+    float min1 = 1e30f;
+    float min2 = 1e30f;
+    int min_idx = -1;
+    int sign = 0;
+    for (int e = h->cn_start[c]; e < h->cn_start[c + 1]; ++e) {
+        const float val = v2c[e];
+        const float a = fabsf(val);
+        if (a < min1) {
+            min2 = min1;
+            min1 = a;
+            min_idx = e;
+        } else if (a < min2) {
+            min2 = a;
+        }
+        sign ^= (val < 0.0f);
+    }
+
+    float res = 0.0f;
+    for (int e = h->cn_start[c]; e < h->cn_start[c + 1]; ++e) {
+        float mag = (e == min_idx) ? min2 : min1;
+        mag = fmaxf(alpha * mag - beta, 0.0f);
+        const int out_sign = sign ^ (v2c[e] < 0.0f);
+        const float next = out_sign ? -mag : mag;
+        const float delta = fabsf(next - c2v[e]);
+        if (delta > res) {
+            res = delta;
+        }
+    }
+    return res;
+}
+
+static void refresh_variable_node(
+    const ldpc_matrix_t *h,
+    int v,
+    const float *channel_llr,
+    float damp,
+    float *app,
+    float *v2c,
+    const float *c2v) {
+    float sum = channel_llr[v];
+    for (int i = h->vn_edges_start[v]; i < h->vn_edges_start[v + 1]; ++i) {
+        sum += c2v[h->vn_edges[i]];
+    }
+    app[v] = damp * app[v] + (1.0f - damp) * sum;
+    for (int i = h->vn_edges_start[v]; i < h->vn_edges_start[v + 1]; ++i) {
+        const int e = h->vn_edges[i];
+        const float extrinsic = app[v] - c2v[e];
+        v2c[e] = damp * v2c[e] + (1.0f - damp) * extrinsic;
+    }
+}
+
 static ldpc_decode_result_t decode_conventional(
     const ldpc_matrix_t *h,
     const float *channel_llr,
@@ -248,10 +313,39 @@ static ldpc_decode_result_t decode_rmas1(
 
     const int group = p->group_size < 1 ? 1 : p->group_size;
     const float damp = fminf(fmaxf(p->damping, 0.0f), 1.0f);
+    residual_entry_t *groups = (residual_entry_t *)calloc((size_t)((h->m + group - 1) / group), sizeof(residual_entry_t));
+    if (!groups) {
+        free(v2c);
+        free(c2v);
+        free(app);
+        return (ldpc_decode_result_t){0, 0};
+    }
+
+    const int num_groups = (h->m + group - 1) / group;
     ldpc_decode_result_t r = {p->max_iters, 0};
 
     for (int it = 0; it < p->max_iters; ++it) {
-        for (int g0 = 0; g0 < h->m; g0 += group) {
+        for (int g = 0; g < num_groups; ++g) {
+            int g0 = g * group;
+            int g1 = g0 + group;
+            if (g1 > h->m) {
+                g1 = h->m;
+            }
+            float g_res = 0.0f;
+            for (int c = g0; c < g1; ++c) {
+                float c_res = check_residual(h, c, p->alpha, p->beta, v2c, c2v);
+                if (c_res > g_res) {
+                    g_res = c_res;
+                }
+            }
+            groups[g].index = g;
+            groups[g].residual = g_res;
+        }
+
+        qsort(groups, (size_t)num_groups, sizeof(groups[0]), cmp_residual_desc);
+
+        for (int gi = 0; gi < num_groups; ++gi) {
+            int g0 = groups[gi].index * group;
             int g1 = g0 + group;
             if (g1 > h->m) {
                 g1 = h->m;
@@ -261,19 +355,7 @@ static ldpc_decode_result_t decode_rmas1(
             }
 
             for (int v = 0; v < h->n; ++v) {
-                float sum = channel_llr[v];
-                for (int i = h->vn_edges_start[v]; i < h->vn_edges_start[v + 1]; ++i) {
-                    sum += c2v[h->vn_edges[i]];
-                }
-                app[v] = damp * app[v] + (1.0f - damp) * sum;
-            }
-
-            for (int c = g0; c < g1; ++c) {
-                for (int e = h->cn_start[c]; e < h->cn_start[c + 1]; ++e) {
-                    int v = h->vn_of_edge[e];
-                    float extrinsic = app[v] - c2v[e];
-                    v2c[e] = damp * v2c[e] + (1.0f - damp) * extrinsic;
-                }
+                refresh_variable_node(h, v, channel_llr, damp, app, v2c, c2v);
             }
         }
 
@@ -291,6 +373,7 @@ static ldpc_decode_result_t decode_rmas1(
     free(v2c);
     free(c2v);
     free(app);
+    free(groups);
     return r;
 }
 
@@ -316,34 +399,42 @@ static ldpc_decode_result_t decode_rmas2(
         }
     }
 
-    const int group = p->group_size < 1 ? 1 : p->group_size;
     const float damp = fminf(fmaxf(p->damping, 0.0f), 1.0f);
-    const float hybrid = 0.5f;
+    int *edge_to_cn = (int *)calloc((size_t)h->edges, sizeof(int));
+    residual_entry_t *checks = (residual_entry_t *)calloc((size_t)h->m, sizeof(residual_entry_t));
+    if (!edge_to_cn || !checks) {
+        free(v2c);
+        free(c2v);
+        free(app);
+        free(edge_to_cn);
+        free(checks);
+        return (ldpc_decode_result_t){0, 0};
+    }
+    for (int c = 0; c < h->m; ++c) {
+        checks[c].index = c;
+        for (int e = h->cn_start[c]; e < h->cn_start[c + 1]; ++e) {
+            edge_to_cn[e] = c;
+        }
+    }
+
     ldpc_decode_result_t r = {p->max_iters, 0};
 
     for (int it = 0; it < p->max_iters; ++it) {
-        for (int g0 = 0; g0 < h->m; g0 += group) {
-            int g1 = g0 + group;
-            if (g1 > h->m) {
-                g1 = h->m;
-            }
+        for (int c = 0; c < h->m; ++c) {
+            checks[c].residual = check_residual(h, c, p->alpha, p->beta, v2c, c2v);
+        }
+        qsort(checks, (size_t)h->m, sizeof(checks[0]), cmp_residual_desc);
 
-            for (int c = g0; c < g1; ++c) {
-                check_node_update(h, c, p->alpha, p->beta, v2c, c2v);
+        for (int i = 0; i < h->m; ++i) {
+            const int c = checks[i].index;
+            check_node_update(h, c, p->alpha, p->beta, v2c, c2v);
 
-                for (int e = h->cn_start[c]; e < h->cn_start[c + 1]; ++e) {
-                    int v = h->vn_of_edge[e];
-                    float local = channel_llr[v];
-                    for (int j = h->vn_edges_start[v]; j < h->vn_edges_start[v + 1]; ++j) {
-                        local += c2v[h->vn_edges[j]];
-                    }
-                    app[v] = damp * app[v] + (1.0f - damp) * (hybrid * app[v] + (1.0f - hybrid) * local);
-                }
-
-                for (int e = h->cn_start[c]; e < h->cn_start[c + 1]; ++e) {
-                    int v = h->vn_of_edge[e];
-                    float extrinsic = app[v] - c2v[e];
-                    v2c[e] = damp * v2c[e] + (1.0f - damp) * extrinsic;
+            for (int e = h->cn_start[c]; e < h->cn_start[c + 1]; ++e) {
+                int v = h->vn_of_edge[e];
+                refresh_variable_node(h, v, channel_llr, damp, app, v2c, c2v);
+                for (int j = h->vn_edges_start[v]; j < h->vn_edges_start[v + 1]; ++j) {
+                    int neigh = edge_to_cn[h->vn_edges[j]];
+                    checks[neigh].residual = check_residual(h, neigh, p->alpha, p->beta, v2c, c2v);
                 }
             }
         }
@@ -362,6 +453,8 @@ static ldpc_decode_result_t decode_rmas2(
     free(v2c);
     free(c2v);
     free(app);
+    free(edge_to_cn);
+    free(checks);
     return r;
 }
 
