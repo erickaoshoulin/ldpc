@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import csv
+import math
 from collections import defaultdict
 from pathlib import Path
 
@@ -27,19 +28,37 @@ def try_matplotlib(rows):
     except ModuleNotFoundError:
         return False
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
+    fig, axes = plt.subplots(2, 2, figsize=(13, 8))
+    axes = axes.flatten()
     styles = {"conventional": "o", "rmas1": "s", "rmas2": "^"}
+    colors = {"conventional": "#1f77b4", "rmas1": "#ff7f0e", "rmas2": "#2ca02c"}
 
     for alg, values in rows.items():
         marker = styles.get(alg, "o")
-        axes[0].semilogy(values["snr"], values["ber"], marker=marker, label=alg.upper(), linewidth=1.8)
-        axes[1].semilogy(values["snr"], values["fer"], marker=marker, label=alg.upper(), linewidth=1.8)
-        axes[2].plot(values["snr"], values["avg_iterations"], marker=marker, label=alg.upper(), linewidth=1.8)
+        color = colors.get(alg, "#555")
+        axes[0].semilogy(values["snr"], values["ber"], marker=marker, color=color, label=alg.upper(), linewidth=2.0)
+        axes[1].semilogy(values["snr"], values["fer"], marker=marker, color=color, label=alg.upper(), linewidth=2.0)
+        axes[2].plot(values["snr"], values["avg_iterations"], marker=marker, color=color, label=alg.upper(), linewidth=2.0)
+
+    best_snr = max(max(v["snr"]) for v in rows.values())
+    ordered = []
+    for alg, values in rows.items():
+        idx = values["snr"].index(best_snr)
+        ordered.append((alg, values["ber"][idx], values["fer"][idx], values["avg_iterations"][idx]))
+    ordered.sort(key=lambda x: x[1])
+
+    table = axes[3]
+    table.axis("off")
+    table.set_title(f"Summary @ {best_snr:.1f} dB")
+    txt = ["Algorithm   BER        FER        AvgIter"]
+    for alg, ber, fer, it in ordered:
+        txt.append(f"{alg.upper():<10} {ber:>8.2e} {fer:>8.2e} {it:>8.2f}")
+    table.text(0.02, 0.95, "\n".join(txt), va="top", family="monospace", fontsize=10)
 
     axes[0].set_title("BER vs SNR")
     axes[1].set_title("FER vs SNR")
     axes[2].set_title("Average Iterations vs SNR")
-    for ax in axes:
+    for ax in axes[:3]:
         ax.set_xlabel("SNR (dB)")
         ax.grid(True, linestyle="--", alpha=0.4)
         ax.legend()
@@ -52,10 +71,10 @@ def try_matplotlib(rows):
 
 
 def write_svg(rows):
-    width, height = 1260, 420
+    width, height = 1260, 640
     pad = 50
     panel_w = (width - 4 * pad) // 3
-    panel_h = height - 2 * pad
+    panel_h = 260
 
     colors = {"conventional": "#1f77b4", "rmas1": "#ff7f0e", "rmas2": "#2ca02c"}
 
@@ -78,7 +97,6 @@ def write_svg(rows):
 
         def ty(y):
             if y_log:
-                import math
                 lo, hi = math.log10(y_min), math.log10(y_max + 1e-12)
                 yy = (math.log10(max(y, y_min)) - lo) / (hi - lo + 1e-9)
             else:
@@ -92,11 +110,31 @@ def write_svg(rows):
                 lines.append(f'<text x="{tx(v["snr"][-1])+6:.1f}" y="{ty(v[metric][-1]):.1f}" font-size="10" fill="{colors.get(alg,"#333")}">{alg.upper()}</text>')
         return "\n".join(lines)
 
+    summary_y = pad + panel_h + 70
+    right_snr = max(max(v["snr"]) for v in rows.values())
+    summary = []
+    for alg, values in rows.items():
+        idx = values["snr"].index(right_snr)
+        summary.append((alg, values["ber"][idx], values["fer"][idx], values["avg_iterations"][idx]))
+    summary.sort(key=lambda x: x[1])
+
+    summary_lines = [
+        f'<text x="{pad}" y="{summary_y}" font-size="18" font-weight="bold">Performance Summary @ {right_snr:.1f} dB</text>',
+        f'<text x="{pad}" y="{summary_y + 28}" font-size="13" font-family="monospace">Algorithm    BER         FER         AvgIter</text>'
+    ]
+    for i, (alg, ber, fer, it) in enumerate(summary):
+        color = colors.get(alg, "#333")
+        y = summary_y + 55 + i * 24
+        summary_lines.append(
+            f'<text x="{pad}" y="{y}" font-size="13" fill="{color}" font-family="monospace">{alg.upper():<10} {ber:>10.3e} {fer:>10.3e} {it:>8.3f}</text>'
+        )
+
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">',
            '<rect width="100%" height="100%" fill="#f8f9fb"/>',
            panel("ber", "BER vs SNR", 0, y_log=True),
            panel("fer", "FER vs SNR", 1, y_log=True),
            panel("avg_iterations", "Average Iterations vs SNR", 2, y_log=False),
+           *summary_lines,
            '</svg>']
     OUT_SVG.write_text("\n".join(svg))
 
