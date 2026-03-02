@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="500">
+<rect width="100%" height="100%" fill="#f8f9fb"/>
+<text x="40" y="24" font-size="18" font-weight="bold">BER comparison across IEEE-like matrix profiles</text>
+<rect x="40" y="60" width="390" height="320" fill="white" stroke="#bbb"/>
+<text x="235.0" y="50" text-anchor="middle" font-size="14">ieee_80211n_r12</text>
+<polyline points="75.0,95.1 141.0,110.2 207.0,121.7 273.0,137.3 339.0,151.9 405.0,174.6" fill="none" stroke="#1f77b4" stroke-width="2"/>
+<polyline points="75.0,107.8 141.0,120.3 207.0,141.4 273.0,162.9 339.0,189.4 405.0,221.8" fill="none" stroke="#ff7f0e" stroke-width="2"/>
+<polyline points="75.0,106.2 141.0,124.2 207.0,139.9 273.0,166.0 339.0,195.0 405.0,214.5" fill="none" stroke="#2ca02c" stroke-width="2"/>
+<polyline points="75.0,85.0 141.0,100.0 207.0,114.4 273.0,124.4 339.0,143.6 405.0,168.4" fill="none" stroke="#d62728" stroke-width="2"/>
+<rect x="465" y="60" width="390" height="320" fill="white" stroke="#bbb"/>
+<text x="660.0" y="50" text-anchor="middle" font-size="14">ieee_80211n_r23</text>
+<polyline points="500.0,123.2 566.0,136.4 632.0,157.8 698.0,149.0 764.0,183.9 830.0,179.3" fill="none" stroke="#1f77b4" stroke-width="2"/>
+<polyline points="500.0,141.2 566.0,158.8 632.0,181.5 698.0,215.9 764.0,253.1 830.0,277.8" fill="none" stroke="#ff7f0e" stroke-width="2"/>
+<polyline points="500.0,143.6 566.0,158.8 632.0,176.7 698.0,205.7 764.0,233.9 830.0,291.7" fill="none" stroke="#2ca02c" stroke-width="2"/>
+<polyline points="500.0,111.9 566.0,118.1 632.0,142.8 698.0,148.8 764.0,167.8 830.0,212.5" fill="none" stroke="#d62728" stroke-width="2"/>
+<rect x="890" y="60" width="390" height="320" fill="white" stroke="#bbb"/>
+<text x="1085.0" y="50" text-anchor="middle" font-size="14">ieee_80211n_r34</text>
+<polyline points="925.0,144.4 991.0,140.6 1057.0,155.5 1123.0,162.6 1189.0,200.6 1255.0,192.1" fill="none" stroke="#1f77b4" stroke-width="2"/>
+<polyline points="925.0,155.3 991.0,182.3 1057.0,215.2 1123.0,245.6 1189.0,286.7 1255.0,306.6" fill="none" stroke="#ff7f0e" stroke-width="2"/>
+<polyline points="925.0,155.3 991.0,181.5 1057.0,213.2 1123.0,235.9 1189.0,277.8 1255.0,350.0" fill="none" stroke="#2ca02c" stroke-width="2"/>
+<polyline points="925.0,113.8 991.0,136.8 1057.0,153.4 1123.0,174.3 1189.0,167.5 1255.0,237.9" fill="none" stroke="#d62728" stroke-width="2"/>
+<line x1="50" y1="430" x2="75" y2="430" stroke="#1f77b4" stroke-width="3"/>
+<text x="82" y="434" font-size="12">CONVENTIONAL</text>
+<line x1="250" y1="430" x2="275" y2="430" stroke="#ff7f0e" stroke-width="3"/>
+<text x="282" y="434" font-size="12">RMAS1</text>
+<line x1="450" y1="430" x2="475" y2="430" stroke="#2ca02c" stroke-width="3"/>
+<text x="482" y="434" font-size="12">RMAS2</text>
+<line x1="650" y1="430" x2="675" y2="430" stroke="#d62728" stroke-width="3"/>
+<text x="682" y="434" font-size="12">AS</text>
+</svg>
