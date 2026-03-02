@@ -459,6 +459,67 @@ static ldpc_decode_result_t decode_rmas2(
 }
 
 
+static ldpc_decode_result_t decode_as(
+    const ldpc_matrix_t *h,
+    const float *channel_llr,
+    const ldpc_decoder_params_t *p,
+    uint8_t *hard_bits) {
+    float *v2c = (float *)calloc((size_t)h->edges, sizeof(float));
+    float *c2v = (float *)calloc((size_t)h->edges, sizeof(float));
+    float *app = (float *)calloc((size_t)h->n, sizeof(float));
+    if (!v2c || !c2v || !app) {
+        free(v2c);
+        free(c2v);
+        free(app);
+        return (ldpc_decode_result_t){0, 0};
+    }
+
+    for (int e = 0; e < h->edges; ++e) {
+        v2c[e] = channel_llr[h->vn_of_edge[e]];
+    }
+
+    const float alpha0 = p->alpha;
+    const float alpha1 = p->alpha_final;
+    ldpc_decode_result_t r = {p->max_iters, 0};
+    for (int it = 0; it < p->max_iters; ++it) {
+        const float t = (p->max_iters <= 1) ? 1.0f : (float)it / (float)(p->max_iters - 1);
+        const float alpha_it = alpha0 + (alpha1 - alpha0) * t;
+
+        for (int c = 0; c < h->m; ++c) {
+            check_node_update(h, c, alpha_it, p->beta, v2c, c2v);
+        }
+
+        for (int v = 0; v < h->n; ++v) {
+            float sum = channel_llr[v];
+            for (int i = h->vn_edges_start[v]; i < h->vn_edges_start[v + 1]; ++i) {
+                sum += c2v[h->vn_edges[i]];
+            }
+            app[v] = sum;
+            hard_bits[v] = (sum < 0.0f) ? 1U : 0U;
+        }
+
+        if (ldpc_check_syndrome(h, hard_bits)) {
+            r.iterations_used = it + 1;
+            r.success = 1;
+            break;
+        }
+
+        for (int v = 0; v < h->n; ++v) {
+            for (int i = h->vn_edges_start[v]; i < h->vn_edges_start[v + 1]; ++i) {
+                int e = h->vn_edges[i];
+                v2c[e] = app[v] - c2v[e];
+            }
+        }
+    }
+
+    free(v2c);
+    free(c2v);
+    free(app);
+    return r;
+}
+
+
+
 ldpc_decode_result_t ldpc_decode(
     const ldpc_matrix_t *h,
     const float *channel_llr,
@@ -470,6 +531,9 @@ ldpc_decode_result_t ldpc_decode(
     }
     if (algorithm == LDPC_ALG_RMAS2) {
         return decode_rmas2(h, channel_llr, params, hard_bits);
+    }
+    if (algorithm == LDPC_ALG_AS) {
+        return decode_as(h, channel_llr, params, hard_bits);
     }
     return decode_conventional(h, channel_llr, params, hard_bits);
 }

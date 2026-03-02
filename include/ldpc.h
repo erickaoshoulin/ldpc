@@ -7,6 +7,7 @@ typedef enum {
     LDPC_ALG_CONVENTIONAL = 0,
     LDPC_ALG_RMAS1 = 1,
     LDPC_ALG_RMAS2 = 2,
+    LDPC_ALG_AS = 3,
 } ldpc_algorithm_t;
 
 typedef struct {
@@ -23,6 +24,7 @@ typedef struct {
 typedef struct {
     int max_iters;
     float alpha;
+    float alpha_final;
     float beta;
     int group_size;
     float damping;

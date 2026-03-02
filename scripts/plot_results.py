@@ -30,8 +30,8 @@ def try_matplotlib(rows):
 
     fig, axes = plt.subplots(2, 2, figsize=(13, 8))
     axes = axes.flatten()
-    styles = {"conventional": "o", "rmas1": "s", "rmas2": "^"}
-    colors = {"conventional": "#1f77b4", "rmas1": "#ff7f0e", "rmas2": "#2ca02c"}
+    styles = {"conventional": "o", "rmas1": "s", "rmas2": "^", "as": "D"}
+    colors = {"conventional": "#1f77b4", "rmas1": "#ff7f0e", "rmas2": "#2ca02c", "as": "#d62728"}
 
     for alg, values in rows.items():
         marker = styles.get(alg, "o")
@@ -76,7 +76,7 @@ def write_svg(rows):
     panel_w = (width - 4 * pad) // 3
     panel_h = 260
 
-    colors = {"conventional": "#1f77b4", "rmas1": "#ff7f0e", "rmas2": "#2ca02c"}
+    colors = {"conventional": "#1f77b4", "rmas1": "#ff7f0e", "rmas2": "#2ca02c", "as": "#d62728"}
 
     snr_vals = [x for v in rows.values() for x in v["snr"]]
     x_min, x_max = min(snr_vals), max(snr_vals)

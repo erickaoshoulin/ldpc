@@ -3,17 +3,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
-static int write_performance_plot(void) {
-    int rc = system("python3 scripts/plot_results.py >/dev/null 2>&1");
-    if (rc != 0) {
-        fprintf(stderr, "warning: failed to generate performance figure (requires python3)\n");
+typedef struct {
+    const char *name;
+    int n;
+    int m;
+    int dv;
+} matrix_profile_t;
+
+static int write_performance_plots(void) {
+    int rc1 = system("python3 scripts/plot_results.py >/dev/null 2>&1");
+    int rc2 = system("python3 scripts/plot_matrix_results.py >/dev/null 2>&1");
+    if (rc1 != 0 || rc2 != 0) {
+        fprintf(stderr, "warning: failed to generate one or more figures (requires python3)\n");
         return -1;
     }
     return 0;
 }
-
 
 static void run_eval(const ldpc_matrix_t *h, ldpc_algorithm_t alg, const ldpc_decoder_params_t *p,
                      float snr_db, int frames, uint32_t seed,
@@ -70,66 +76,95 @@ int main(int argc, char **argv) {
     if (argc > 3) dv = atoi(argv[3]);
     if (argc > 4) frames = atoi(argv[4]);
 
-    ldpc_matrix_t h;
-    if (ldpc_generate_regular(&h, n, m, dv, 0x12345678u) != 0) {
-        fprintf(stderr, "failed to generate regular H matrix (check n*dv %% m == 0)\n");
-        return 1;
-    }
+    const matrix_profile_t profiles[] = {
+        {"custom", n, m, dv},
+        {"ieee_80211n_r12", 648, 324, 6},
+        {"ieee_80211n_r23", 648, 216, 6},
+        {"ieee_80211n_r34", 648, 162, 6},
+    };
 
     ldpc_decoder_params_t conv = {
         .max_iters = max_iters,
         .alpha = alpha,
+        .alpha_final = alpha,
         .beta = beta,
         .group_size = 1,
         .damping = 0.0f,
     };
-
     ldpc_decoder_params_t rmas1 = {
         .max_iters = max_iters,
         .alpha = alpha,
+        .alpha_final = alpha,
         .beta = beta,
         .group_size = group_size,
         .damping = damping,
     };
-
-    FILE *fp = fopen("results/performance.csv", "w");
-    if (!fp) {
-        perror("fopen");
-        ldpc_free_matrix(&h);
-        return 1;
-    }
-    fprintf(fp, "snr_db,algorithm,ber,fer,avg_iterations\n");
-
-    printf("LDPC eval n=%d m=%d dv=%d rate=%.4f frames=%d\n", h.n, h.m, dv,
-           (double)(h.n - h.m) / h.n, frames);
-
     ldpc_decoder_params_t rmas2 = {
         .max_iters = max_iters,
         .alpha = alpha,
+        .alpha_final = alpha,
         .beta = beta * 0.8f,
         .group_size = group_size,
         .damping = damping * 0.5f,
     };
+    ldpc_decoder_params_t as = {
+        .max_iters = max_iters,
+        .alpha = 0.70f,
+        .alpha_final = 0.95f,
+        .beta = beta * 0.5f,
+        .group_size = 1,
+        .damping = 0.0f,
+    };
 
-    for (float snr = 4.5f; snr <= 7.0f; snr += 0.5f) {
-        double ber, fer, it;
-        run_eval(&h, LDPC_ALG_CONVENTIONAL, &conv, snr, frames, 0xABCDEF01u, &ber, &fer, &it);
-        printf("SNR %.2f conventional BER=%.6e FER=%.6e Iter=%.2f\n", snr, ber, fer, it);
-        fprintf(fp, "%.2f,conventional,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
+    FILE *fp = fopen("results/performance.csv", "w");
+    FILE *fp_matrix = fopen("results/matrix_performance.csv", "w");
+    if (!fp || !fp_matrix) {
+        perror("fopen");
+        if (fp) fclose(fp);
+        if (fp_matrix) fclose(fp_matrix);
+        return 1;
+    }
+    fprintf(fp, "snr_db,algorithm,ber,fer,avg_iterations\n");
+    fprintf(fp_matrix, "profile,snr_db,algorithm,ber,fer,avg_iterations\n");
 
-        run_eval(&h, LDPC_ALG_RMAS1, &rmas1, snr, frames, 0x10203040u, &ber, &fer, &it);
-        printf("SNR %.2f RMAS1        BER=%.6e FER=%.6e Iter=%.2f\n", snr, ber, fer, it);
-        fprintf(fp, "%.2f,rmas1,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
+    for (size_t pi = 0; pi < sizeof(profiles) / sizeof(profiles[0]); ++pi) {
+        const matrix_profile_t *mp = &profiles[pi];
+        ldpc_matrix_t h;
+        if (ldpc_generate_regular(&h, mp->n, mp->m, mp->dv, 0x12345678u + (uint32_t)pi) != 0) {
+            fprintf(stderr, "failed to generate H matrix for profile %s\n", mp->name);
+            fclose(fp);
+            fclose(fp_matrix);
+            return 1;
+        }
 
-        run_eval(&h, LDPC_ALG_RMAS2, &rmas2, snr, frames, 0x55667788u, &ber, &fer, &it);
-        printf("SNR %.2f RMAS2        BER=%.6e FER=%.6e Iter=%.2f\n", snr, ber, fer, it);
-        fprintf(fp, "%.2f,rmas2,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
+        printf("\nLDPC eval profile=%s n=%d m=%d dv=%d rate=%.4f frames=%d\n", mp->name, h.n, h.m, mp->dv,
+               (double)(h.n - h.m) / h.n, frames);
+
+        for (float snr = 4.5f; snr <= 7.0f; snr += 0.5f) {
+            double ber, fer, it;
+            run_eval(&h, LDPC_ALG_CONVENTIONAL, &conv, snr, frames, 0xABCDEF01u, &ber, &fer, &it);
+            if (pi == 0) fprintf(fp, "%.2f,conventional,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
+            fprintf(fp_matrix, "%s,%.2f,conventional,%.8e,%.8e,%.4f\n", mp->name, snr, ber, fer, it);
+
+            run_eval(&h, LDPC_ALG_RMAS1, &rmas1, snr, frames, 0x10203040u, &ber, &fer, &it);
+            if (pi == 0) fprintf(fp, "%.2f,rmas1,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
+            fprintf(fp_matrix, "%s,%.2f,rmas1,%.8e,%.8e,%.4f\n", mp->name, snr, ber, fer, it);
+
+            run_eval(&h, LDPC_ALG_RMAS2, &rmas2, snr, frames, 0x55667788u, &ber, &fer, &it);
+            if (pi == 0) fprintf(fp, "%.2f,rmas2,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
+            fprintf(fp_matrix, "%s,%.2f,rmas2,%.8e,%.8e,%.4f\n", mp->name, snr, ber, fer, it);
+
+            run_eval(&h, LDPC_ALG_AS, &as, snr, frames, 0x77AABBCCu, &ber, &fer, &it);
+            if (pi == 0) fprintf(fp, "%.2f,as,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
+            fprintf(fp_matrix, "%s,%.2f,as,%.8e,%.8e,%.4f\n", mp->name, snr, ber, fer, it);
+        }
+        ldpc_free_matrix(&h);
     }
 
     fclose(fp);
-    write_performance_plot();
-    ldpc_free_matrix(&h);
+    fclose(fp_matrix);
+    write_performance_plots();
 
-    printf("results written to results/performance.csv and results/performance.svg\n");
+    printf("results written to results/performance.csv, results/matrix_performance.csv and figures\n");
     return 0;
 }
