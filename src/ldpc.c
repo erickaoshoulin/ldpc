@@ -37,7 +37,6 @@ static float gaussian01(uint32_t *seed) {
 }
 
 int ldpc_generate_regular(ldpc_matrix_t *h, int n, int m, int dv, uint32_t seed) {
-    (void)seed;
     if (!h || n <= 0 || m <= 0 || dv <= 1 || (n * dv) % m != 0 || (n % m) != 0) {
         return -1;
     }
@@ -69,23 +68,73 @@ int ldpc_generate_regular(ldpc_matrix_t *h, int n, int m, int dv, uint32_t seed)
         return -1;
     }
 
-    const int step = 5;
-    const int jump = m / dv;
-    for (int v = 0; v < n; ++v) {
-        for (int k = 0; k < dv; ++k) {
-            int c = (v * step + k * jump) % m;
-            if (adj[(size_t)v * (size_t)m + (size_t)c]) {
-                free(used); free(adj); free(cursor); ldpc_free_matrix(h); return -1;
+    uint32_t rng = seed ? seed : 0x9E3779B9u;
+    int success = 0;
+    for (int attempt = 0; attempt < 4096 && !success; ++attempt) {
+        memset(adj, 0, (size_t)n * (size_t)m * sizeof(uint8_t));
+        memset(used, 0, (size_t)m * sizeof(int));
+        memset(h->vn_degree, 0, (size_t)n * sizeof(int));
+
+        success = 1;
+        for (int v = 0; v < n && success; ++v) {
+            for (int k = 0; k < dv; ++k) {
+                int remaining = 0;
+                for (int c = 0; c < m; ++c) {
+                    if (!adj[(size_t)v * (size_t)m + (size_t)c] && used[c] < dc) {
+                        remaining++;
+                    }
+                }
+                if (remaining == 0) {
+                    success = 0;
+                    break;
+                }
+
+                int pick = (int)(xorshift32(&rng) % (uint32_t)remaining);
+                int chosen = -1;
+                for (int c = 0; c < m; ++c) {
+                    if (adj[(size_t)v * (size_t)m + (size_t)c] || used[c] >= dc) {
+                        continue;
+                    }
+                    if (pick == 0) {
+                        chosen = c;
+                        break;
+                    }
+                    pick--;
+                }
+
+                if (chosen < 0) {
+                    success = 0;
+                    break;
+                }
+
+                adj[(size_t)v * (size_t)m + (size_t)chosen] = 1;
+                used[chosen]++;
+                h->vn_degree[v]++;
             }
-            adj[(size_t)v * (size_t)m + (size_t)c] = 1;
-            used[c]++;
-            h->vn_degree[v]++;
         }
+
+        for (int c = 0; c < m && success; ++c) {
+            if (used[c] != dc) {
+                success = 0;
+            }
+        }
+    }
+
+    if (!success) {
+        free(used);
+        free(adj);
+        free(cursor);
+        ldpc_free_matrix(h);
+        return -1;
     }
 
     for (int c = 0; c < m; ++c) {
         if (used[c] != dc) {
-            free(used); free(adj); free(cursor); ldpc_free_matrix(h); return -1;
+            free(used);
+            free(adj);
+            free(cursor);
+            ldpc_free_matrix(h);
+            return -1;
         }
     }
 
