@@ -5,6 +5,16 @@
 #include <string.h>
 #include <time.h>
 
+static int write_performance_plot(void) {
+    int rc = system("python3 scripts/plot_results.py >/dev/null 2>&1");
+    if (rc != 0) {
+        fprintf(stderr, "warning: failed to generate performance figure (requires python3)\n");
+        return -1;
+    }
+    return 0;
+}
+
+
 static void run_eval(const ldpc_matrix_t *h, ldpc_algorithm_t alg, const ldpc_decoder_params_t *p,
                      float snr_db, int frames, uint32_t seed,
                      double *ber, double *fer, double *avg_iters) {
@@ -74,7 +84,7 @@ int main(int argc, char **argv) {
         .damping = 0.0f,
     };
 
-    ldpc_decoder_params_t prop = {
+    ldpc_decoder_params_t rmas1 = {
         .max_iters = max_iters,
         .alpha = alpha,
         .beta = beta,
@@ -93,20 +103,33 @@ int main(int argc, char **argv) {
     printf("LDPC eval n=%d m=%d dv=%d rate=%.4f frames=%d\n", h.n, h.m, dv,
            (double)(h.n - h.m) / h.n, frames);
 
+    ldpc_decoder_params_t rmas2 = {
+        .max_iters = max_iters,
+        .alpha = alpha,
+        .beta = beta * 0.8f,
+        .group_size = group_size,
+        .damping = damping * 0.5f,
+    };
+
     for (float snr = 4.5f; snr <= 7.0f; snr += 0.5f) {
         double ber, fer, it;
         run_eval(&h, LDPC_ALG_CONVENTIONAL, &conv, snr, frames, 0xABCDEF01u, &ber, &fer, &it);
         printf("SNR %.2f conventional BER=%.6e FER=%.6e Iter=%.2f\n", snr, ber, fer, it);
         fprintf(fp, "%.2f,conventional,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
 
-        run_eval(&h, LDPC_ALG_PROPOSED, &prop, snr, frames, 0x10203040u, &ber, &fer, &it);
-        printf("SNR %.2f proposed     BER=%.6e FER=%.6e Iter=%.2f\n", snr, ber, fer, it);
-        fprintf(fp, "%.2f,proposed,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
+        run_eval(&h, LDPC_ALG_RMAS1, &rmas1, snr, frames, 0x10203040u, &ber, &fer, &it);
+        printf("SNR %.2f RMAS1        BER=%.6e FER=%.6e Iter=%.2f\n", snr, ber, fer, it);
+        fprintf(fp, "%.2f,rmas1,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
+
+        run_eval(&h, LDPC_ALG_RMAS2, &rmas2, snr, frames, 0x55667788u, &ber, &fer, &it);
+        printf("SNR %.2f RMAS2        BER=%.6e FER=%.6e Iter=%.2f\n", snr, ber, fer, it);
+        fprintf(fp, "%.2f,rmas2,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
     }
 
     fclose(fp);
+    write_performance_plot();
     ldpc_free_matrix(&h);
 
-    printf("results written to results/performance.csv\n");
+    printf("results written to results/performance.csv and results/performance.svg\n");
     return 0;
 }

@@ -1,18 +1,24 @@
-# LDPC Conventional vs Proposed Decoder (C Implementation)
+# LDPC Decoder Benchmark: Conventional vs RMAS1 vs RMAS2
 
-This repository now contains a **modular and parameterized C implementation** to evaluate two LDPC decoding flows inspired by the paper draft in `draft.pdf`:
+This repository provides a compact C-based LDPC simulation to compare:
 
-- **Conventional**: flooding-style normalized/offset min-sum.
-- **Proposed**: grouped/layered variable-node-centric style update with damping.
+- **Conventional** normalized/offset Min-Sum (flooding schedule)
+- **RMAS1** grouped residual-aided message passing (layered-in-groups + damping)
+- **RMAS2** fine-grained residual-aided message passing (per-check refresh + damping)
 
-> Note: The original draft PDF is hardware-focused. This implementation intentionally focuses on algorithmic behavior and software-side BER/FER evaluation only.
+The algorithmic draft is documented in:
+
+- `docs/ldpc_decoder_draft.pdf`
 
 ## Repository layout
 
-- `include/ldpc.h`: public APIs and parameter structs.
-- `src/ldpc.c`: LDPC matrix generation, AWGN model, decoding kernels.
-- `src/main.c`: evaluation driver that compares conventional vs proposed decoder.
-- `results/performance.csv`: generated performance table.
+- `include/ldpc.h`: public API, decoder enums, parameter types.
+- `src/ldpc.c`: matrix generation, channel model, and decoding kernels.
+- `src/main.c`: benchmark runner and CSV writer.
+- `scripts/plot_results.py`: result visualization utility.
+- `results/performance.csv`: numerical benchmark output.
+- `results/performance.svg`: always-generated BER/FER/iterations performance curves.
+- `results/performance.png`: optional PNG export (when matplotlib is available).
 
 ## Build
 
@@ -20,7 +26,7 @@ This repository now contains a **modular and parameterized C implementation** to
 make
 ```
 
-## Run evaluation
+## Run
 
 ```bash
 ./ldpc_eval
@@ -32,34 +38,38 @@ Optional arguments:
 ./ldpc_eval <n> <m> <dv> <frames>
 ```
 
-Default values:
+Defaults:
 
-- `n=512` code length
-- `m=64` parity checks
-- `dv=6` variable-node degree
-- `frames=300` Monte-Carlo frames per SNR point
+- `n=512`
+- `m=64`
+- `dv=6`
+- `frames=300`
 
-The executable sweeps SNR from **4.5 dB to 7.0 dB** and writes:
+The program sweeps SNR from **4.5 dB to 7.0 dB** and writes:
 
-- BER (bit error rate)
-- FER (frame error rate)
-- average iterations
+- BER
+- FER
+- average iteration count
 
-to `results/performance.csv`.
+into `results/performance.csv`, then generates a summary figure in `results/performance.svg` (and optionally `results/performance.png`).
 
-## Algorithm parameterization
+> Plot generation requires Python 3. PNG additionally requires `matplotlib`.
 
-Both decoders share these tunables in `ldpc_decoder_params_t`:
+## Decoder notes
+
+Shared tunables (`ldpc_decoder_params_t`):
 
 - `max_iters`
-- `alpha` (normalized min-sum factor)
-- `beta` (offset min-sum correction)
+- `alpha` (normalized factor)
+- `beta` (offset)
 
-Proposed decoder adds:
+RMAS-specific knobs:
 
-- `group_size` (check-node group processing size)
-- `damping` (message damping factor)
+- `group_size`
+- `damping`
 
-## Open-source
+RMAS2 uses the same struct and applies a denser per-check APP refresh schedule intended to emulate a more aggressive residual propagation.
 
-This project is now distributed under the MIT License (`LICENSE`).
+## License
+
+MIT (`LICENSE`).

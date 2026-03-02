@@ -18,6 +18,6 @@ run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -f $(OBJ) $(TARGET) results/performance.csv
+	rm -f $(OBJ) $(TARGET) results/performance.csv results/performance.png results/performance.svg
 
 .PHONY: all run clean
