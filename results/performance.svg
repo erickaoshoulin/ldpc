@@ -2,38 +2,38 @@
 <rect width="100%" height="100%" fill="#f8f9fb"/>
 <rect x="50" y="50" width="353" height="260" fill="white" stroke="#bbb"/>
 <text x="226.5" y="38" text-anchor="middle" font-size="14">BER vs SNR</text>
-<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="80.0,70.3 142.6,70.0 205.2,75.1 267.8,102.2 330.4,111.6 393.0,121.0"/>
-<text x="399.0" y="121.0" font-size="10" fill="#1f77b4">CONVENTIONAL</text>
-<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="80.0,86.7 142.6,100.7 205.2,105.8 267.8,112.6 330.4,125.3 393.0,131.4"/>
-<text x="399.0" y="131.4" font-size="10" fill="#ff7f0e">RMAS1</text>
-<polyline fill="none" stroke="#2ca02c" stroke-width="2" points="80.0,95.1 142.6,102.8 205.2,110.6 267.8,125.3 330.4,141.8 393.0,290.0"/>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="80.0,74.5 142.6,111.4 205.2,290.0 267.8,290.0 330.4,290.0 393.0,290.0"/>
+<text x="399.0" y="290.0" font-size="10" fill="#1f77b4">CONVENTIONAL</text>
+<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="80.0,79.8 142.6,137.7 205.2,290.0 267.8,290.0 330.4,290.0 393.0,290.0"/>
+<text x="399.0" y="290.0" font-size="10" fill="#ff7f0e">RMAS1</text>
+<polyline fill="none" stroke="#2ca02c" stroke-width="2" points="80.0,83.9 142.6,115.4 205.2,290.0 267.8,290.0 330.4,290.0 393.0,290.0"/>
 <text x="399.0" y="290.0" font-size="10" fill="#2ca02c">RMAS2</text>
-<polyline fill="none" stroke="#d62728" stroke-width="2" points="80.0,77.8 142.6,84.2 205.2,95.1 267.8,103.9 330.4,116.2 393.0,141.8"/>
-<text x="399.0" y="141.8" font-size="10" fill="#d62728">AS</text>
+<polyline fill="none" stroke="#d62728" stroke-width="2" points="80.0,70.0 142.6,101.5 205.2,290.0 267.8,290.0 330.4,290.0 393.0,290.0"/>
+<text x="399.0" y="290.0" font-size="10" fill="#d62728">AS</text>
 <rect x="453" y="50" width="353" height="260" fill="white" stroke="#bbb"/>
 <text x="629.5" y="38" text-anchor="middle" font-size="14">FER vs SNR</text>
-<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="483.0,70.0 545.6,72.7 608.2,73.4 670.8,78.3 733.4,86.6 796.0,86.6"/>
-<text x="802.0" y="86.6" font-size="10" fill="#1f77b4">CONVENTIONAL</text>
-<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="483.0,72.7 545.6,76.1 608.2,79.5 670.8,82.5 733.4,92.7 796.0,97.5"/>
-<text x="802.0" y="97.5" font-size="10" fill="#ff7f0e">RMAS1</text>
-<polyline fill="none" stroke="#2ca02c" stroke-width="2" points="483.0,74.3 545.6,79.5 608.2,84.4 670.8,97.5 733.4,105.8 796.0,290.0"/>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="483.0,70.0 545.6,95.8 608.2,290.0 670.8,290.0 733.4,290.0 796.0,290.0"/>
+<text x="802.0" y="290.0" font-size="10" fill="#1f77b4">CONVENTIONAL</text>
+<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="483.0,77.6 545.6,114.9 608.2,290.0 670.8,290.0 733.4,290.0 796.0,290.0"/>
+<text x="802.0" y="290.0" font-size="10" fill="#ff7f0e">RMAS1</text>
+<polyline fill="none" stroke="#2ca02c" stroke-width="2" points="483.0,78.5 545.6,105.3 608.2,290.0 670.8,290.0 733.4,290.0 796.0,290.0"/>
 <text x="802.0" y="290.0" font-size="10" fill="#2ca02c">RMAS2</text>
-<polyline fill="none" stroke="#d62728" stroke-width="2" points="483.0,71.3 545.6,74.3 608.2,77.1 670.8,84.4 733.4,92.7 796.0,105.8"/>
-<text x="802.0" y="105.8" font-size="10" fill="#d62728">AS</text>
+<polyline fill="none" stroke="#d62728" stroke-width="2" points="483.0,70.0 545.6,92.7 608.2,290.0 670.8,290.0 733.4,290.0 796.0,290.0"/>
+<text x="802.0" y="290.0" font-size="10" fill="#d62728">AS</text>
 <rect x="856" y="50" width="353" height="260" fill="white" stroke="#bbb"/>
 <text x="1032.5" y="38" text-anchor="middle" font-size="14">Average Iterations vs SNR</text>
-<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="886.0,70.0 948.6,108.8 1011.2,168.4 1073.8,189.1 1136.4,234.4 1199.0,252.5"/>
-<text x="1205.0" y="252.5" font-size="10" fill="#1f77b4">CONVENTIONAL</text>
-<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="886.0,203.9 948.6,239.5 1011.2,280.3 1073.8,286.1 1136.4,289.4 1199.0,289.4"/>
-<text x="1205.0" y="289.4" font-size="10" fill="#ff7f0e">RMAS1</text>
-<polyline fill="none" stroke="#2ca02c" stroke-width="2" points="886.0,214.9 948.6,242.1 1011.2,286.1 1073.8,290.0 1136.4,289.4 1199.0,290.0"/>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="886.0,70.0 948.6,208.2 1011.2,265.5 1073.8,280.3 1136.4,287.2 1199.0,289.8"/>
+<text x="1205.0" y="289.8" font-size="10" fill="#1f77b4">CONVENTIONAL</text>
+<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="886.0,171.2 948.6,254.7 1011.2,286.7 1073.8,289.3 1136.4,290.0 1199.0,289.8"/>
+<text x="1205.0" y="289.8" font-size="10" fill="#ff7f0e">RMAS1</text>
+<polyline fill="none" stroke="#2ca02c" stroke-width="2" points="886.0,189.6 948.6,269.0 1011.2,289.3 1073.8,290.0 1136.4,290.0 1199.0,290.0"/>
 <text x="1205.0" y="290.0" font-size="10" fill="#2ca02c">RMAS2</text>
-<polyline fill="none" stroke="#d62728" stroke-width="2" points="886.0,114.6 948.6,163.8 1011.2,202.6 1073.8,225.3 1136.4,267.4 1199.0,280.9"/>
-<text x="1205.0" y="280.9" font-size="10" fill="#d62728">AS</text>
+<polyline fill="none" stroke="#d62728" stroke-width="2" points="886.0,74.1 948.6,211.3 1011.2,266.6 1073.8,279.8 1136.4,287.4 1199.0,289.8"/>
+<text x="1205.0" y="289.8" font-size="10" fill="#d62728">AS</text>
 <text x="50" y="380" font-size="18" font-weight="bold">Performance Summary @ 7.0 dB</text>
 <text x="50" y="408" font-size="13" font-family="monospace">Algorithm    BER         FER         AvgIter</text>
-<text x="50" y="435" font-size="13" fill="#2ca02c" font-family="monospace">RMAS2       0.000e+00  0.000e+00    1.000</text>
-<text x="50" y="459" font-size="13" fill="#d62728" font-family="monospace">AS          1.953e-04  5.000e-02    1.700</text>
-<text x="50" y="483" font-size="13" fill="#ff7f0e" font-family="monospace">RMAS1       3.906e-04  1.000e-01    1.050</text>
-<text x="50" y="507" font-size="13" fill="#1f77b4" font-family="monospace">CONVENTIONAL  7.813e-04  2.500e-01    3.900</text>
+<text x="50" y="435" font-size="13" fill="#1f77b4" font-family="monospace">CONVENTIONAL  0.000e+00  0.000e+00    1.003</text>
+<text x="50" y="459" font-size="13" fill="#ff7f0e" font-family="monospace">RMAS1       0.000e+00  0.000e+00    1.003</text>
+<text x="50" y="483" font-size="13" fill="#2ca02c" font-family="monospace">RMAS2       0.000e+00  0.000e+00    1.000</text>
+<text x="50" y="507" font-size="13" fill="#d62728" font-family="monospace">AS          0.000e+00  0.000e+00    1.003</text>
 </svg>

@@ -140,23 +140,27 @@ int main(int argc, char **argv) {
         printf("\nLDPC eval profile=%s n=%d m=%d dv=%d rate=%.4f frames=%d\n", mp->name, h.n, h.m, mp->dv,
                (double)(h.n - h.m) / h.n, frames);
 
+        int snr_idx = 0;
         for (float snr = 4.5f; snr <= 7.0f; snr += 0.5f) {
+            const uint32_t channel_seed = 0xABCDEF01u + (uint32_t)(pi * 31 + snr_idx * 17);
             double ber, fer, it;
-            run_eval(&h, LDPC_ALG_CONVENTIONAL, &conv, snr, frames, 0xABCDEF01u, &ber, &fer, &it);
+            run_eval(&h, LDPC_ALG_CONVENTIONAL, &conv, snr, frames, channel_seed, &ber, &fer, &it);
             if (pi == 0) fprintf(fp, "%.2f,conventional,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
             fprintf(fp_matrix, "%s,%.2f,conventional,%.8e,%.8e,%.4f\n", mp->name, snr, ber, fer, it);
 
-            run_eval(&h, LDPC_ALG_RMAS1, &rmas1, snr, frames, 0x10203040u, &ber, &fer, &it);
+            run_eval(&h, LDPC_ALG_RMAS1, &rmas1, snr, frames, channel_seed, &ber, &fer, &it);
             if (pi == 0) fprintf(fp, "%.2f,rmas1,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
             fprintf(fp_matrix, "%s,%.2f,rmas1,%.8e,%.8e,%.4f\n", mp->name, snr, ber, fer, it);
 
-            run_eval(&h, LDPC_ALG_RMAS2, &rmas2, snr, frames, 0x55667788u, &ber, &fer, &it);
+            run_eval(&h, LDPC_ALG_RMAS2, &rmas2, snr, frames, channel_seed, &ber, &fer, &it);
             if (pi == 0) fprintf(fp, "%.2f,rmas2,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
             fprintf(fp_matrix, "%s,%.2f,rmas2,%.8e,%.8e,%.4f\n", mp->name, snr, ber, fer, it);
 
-            run_eval(&h, LDPC_ALG_AS, &as, snr, frames, 0x77AABBCCu, &ber, &fer, &it);
+            run_eval(&h, LDPC_ALG_AS, &as, snr, frames, channel_seed, &ber, &fer, &it);
             if (pi == 0) fprintf(fp, "%.2f,as,%.8e,%.8e,%.4f\n", snr, ber, fer, it);
             fprintf(fp_matrix, "%s,%.2f,as,%.8e,%.8e,%.4f\n", mp->name, snr, ber, fer, it);
+
+            snr_idx++;
         }
         ldpc_free_matrix(&h);
     }
